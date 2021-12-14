@@ -1,8 +1,8 @@
 [App]
-Name = "challenge-wildfires-submission-<fill your team name>"
+Name = "challenge-wildfires-submission-deepmind"
 Version = "1.0"
-Title = "Wildfire Challenge Submission Title <Team>"
-Description = "Wildfire Challenge Submission Description <Team>."
+Title = "Wildfire Challenge Submission Title deepmind"
+Description = "Wildfire Challenge Submission Description."
 LongDescription = "about.md"
 Tags = ["WILDFIRES"]
 
