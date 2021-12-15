@@ -43,17 +43,17 @@ def show_bush_fires(df: pd.DataFrame):
     aus_fires.longitude = aus_fires.longitude.round(1)
     sample = aus_fires[(aus_fires.acq_date >= '2005-01-01') & (aus_fires.acq_date <= '2005-12-31')]
     sample = sample.groupby(['latitude', 'longitude']).size().reset_index()
-    sample.columns = ['latitude', 'longitude', 'fire_cnt']
-    sample = sample[sample.fire_cnt > 3]
+    sample.columns = ['latitude', 'longitude', 'est_fire_happend']
+    sample = sample[sample.est_fire_happend > 1]
     fig = go.Figure(data=go.Scattergeo(
         lat=sample['latitude'],
         lon=sample['longitude'],
         marker=dict(
-            color=sample['fire_cnt'],
+            color=sample['est_fire_happend'],
             reversescale=True,
             opacity=0.8,
             line=dict(width=0),
-            size=np.log(sample.fire_cnt) + 1,
+            size=np.log(sample.est_fire_happend) + 1,
         ),
     ))
     fig.update_layout(
@@ -72,7 +72,7 @@ def to_html(fig: FigureWidget):
 
 # Use plotly to make scatter plot for prediction visualization.
 def show_predictions(df: pd.DataFrame):
-    worst = df[df.fire_prediction > 0.1]
+    worst = df[df.fire_prediction > 1]
     fig = go.Figure(data=go.Scattergeo(
         lat=worst['latitude'],
         lon=worst['longitude'],

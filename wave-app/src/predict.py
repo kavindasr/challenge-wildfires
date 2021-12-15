@@ -65,6 +65,36 @@ async def predict_results(q:Q, val:str):
     # Make the actual prediction.
     await q.run(model_predict, q, val, year, month)
 
+async def prediction(test_predictions):
+    prediction = pd.DataFrame(test_predictions)
+
+    prediction[0] = prediction[0].round().astype(int)
+    prediction[1] = prediction[1].round().astype(int)
+    prediction[2] = prediction[2].round().astype(int)
+    prediction[3] = prediction[3].round().astype(int)
+    prediction[4] = prediction[4].round().astype(int)
+
+
+    def prediction_handle(prediction): #prediction = row
+    if (prediction[0] == 1):
+        return 0
+    elif (prediction[1] == 1):
+        return 1
+    elif (prediction[2] == 1):
+        return 2
+    elif (prediction[3] == 1):
+        return 3
+    elif (prediction[4] == 1):
+        return 4
+    else:
+        return 0
+
+    prediction['prediction'] = prediction.apply (lambda row: prediction_handle(row), axis=1) 
+
+
+    return prediction['prediction'].values
+    
+
 
 async def model_predict(q:Q, val:str, year:str, month:int):
     model = q.app.models[val]
@@ -76,7 +106,9 @@ async def model_predict(q:Q, val:str, year:str, month:int):
     test = test[test.month == month]
 
     # Use the model to predict.
-    test['fire_prediction'] = model.predict(test[features])
+
+    test_predictions = model.predict(test[features])
+    test['fire_prediction'] = await prediction(test_predictions)
     fig = show_predictions(test)
 
     # Convert figure to html.
@@ -87,6 +119,7 @@ async def model_predict(q:Q, val:str, year:str, month:int):
         ui.frame(content=html, height='500px')
     ])
     await q.page.save()
+
 
 
 # Util function to get month as str from month int.
