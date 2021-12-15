@@ -10,7 +10,7 @@ def prediction(test_predictions):
 	prediction[4] = prediction[4].round().astype(int)
 
 
-	def prediction_handle(prediction): #prediction = row
+def prediction_handle(prediction): #prediction = row
     if (prediction[0] == 1):
         return 0
     elif (prediction[1] == 1):
