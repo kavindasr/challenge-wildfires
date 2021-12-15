@@ -1,58 +1,63 @@
 from h2o_wave import main, app, Q, ui, on, data
 import pandas as pd
 
-PRECISION = 1
-MIN_FIRE_RECORDS = 2
-
 # Data prep step from the submission notebook (challenge_wildfires/notebook/).
 async def get_data(q:Q, path:str):
-
-    aus_fires = pd.read_csv(path, parse_dates=['acq_date'])
     aus_fires['year'] = aus_fires.acq_date.dt.year
     aus_fires['month'] = aus_fires.acq_date.dt.month
-    aus_fires.latitude = aus_fires.latitude.round(PRECISION)
-    aus_fires.longitude = aus_fires.longitude.round(PRECISION)
-    fires = aus_fires.groupby(['latitude', 'longitude', 'year', 'month']).size().reset_index()
-    fires.columns = ['latitude', 'longitude', 'year', 'month', 'cnt']
+    aus_fires['day'] = aus_fires.acq_date.dt.day
 
-    coords = fires[['latitude', 'longitude']].drop_duplicates()
-    times = fires[['year', 'month']].drop_duplicates()
-    coords['one'] = 1; times['one'] = 1
-    base = pd.merge(coords, times, how='outer', on='one')
-    history = base.merge(fires, how='left', on=['latitude', 'longitude', 'year', 'month'])
+    aus_fires['est_fire_area'] = aus_fires['scan'] * aus_fires['track']
+    aus_fires['est_brightness'] = (aus_fires['brightness'] + aus_fires['bright_t31']) / 2
+    aus_fires.latitude = aus_fires.latitude.round(1)
+    aus_fires.longitude = aus_fires.longitude.round(1)
 
-    history = history.fillna(0)
-    history.cnt.value_counts().head()
+    fires = aus_fires[['latitude', 'longitude', 'year', 'month', 'day', 'confidence',
+                       'est_fire_area', 'est_brightness', 'frp', 'type', 'daynight']].copy()
 
-    history['fire'] = 1 * (history['cnt'] >= MIN_FIRE_RECORDS)
+    count = fires.groupby(['latitude', 'longitude', 'year', 'month', 'day']).size().reset_index().rename(
+        columns={0: 'fire_count'})
+    fire_copy = fires.merge(count, how='outer', on=['latitude', 'longitude', 'year', 'month', 'day'])
 
-    yearly = history.groupby(['latitude', 'longitude', 'year'])[['cnt', 'fire']].mean().reset_index()
-    monthly = history.groupby(['latitude', 'longitude', 'year', 'month'])[['cnt', 'fire']].mean().reset_index()
+    def fire_happend(fire_copy):  # here fire_copy == row
+        if ((fire_copy['confidence'] >= 70) & (fire_copy['fire_count'] > 1) & (fire_copy['type'] == 0)):
+            return 4
+        elif ((fire_copy['confidence'] >= 70) & (fire_copy['fire_count'] == 1) & (fire_copy['type'] == 0)):
+            return 3
+        elif ((fire_copy['confidence'] < 70) & (fire_copy['confidence'] >= 40) & (fire_copy['fire_count'] > 1) & (
+                fire_copy['type'] == 0)):
+            return 3
+        elif ((fire_copy['confidence'] < 70) & (fire_copy['confidence'] >= 40) & (fire_copy['fire_count'] == 1) & (
+                fire_copy['type'] == 0)):
+            return 2
+        elif ((fire_copy['confidence'] < 40) & (fire_copy['confidence'] >= 0) & (fire_copy['fire_count'] > 1) & (
+                fire_copy['type'] == 0)):
+            return 2
+        elif ((fire_copy['confidence'] < 40) & (fire_copy['confidence'] >= 0) & (fire_copy['fire_count'] == 1) & (
+                fire_copy['type'] == 0)):
+            return 1
+        else:
+            return 0
+
+    fire_copy['est_fire_happend'] = fire_copy.apply(lambda row: fire_happend(row), axis=1)
+
+    fire_copy = fire_copy.groupby(['latitude', 'longitude', 'year', 'month', 'day'])[
+        ['fire_count', 'confidence', 'frp', 'est_fire_area', 'est_brightness', 'est_fire_happend']].mean().reset_index()
+
+    fire_copy.est_fire_happend = fire_copy.est_fire_happend.round().astype(int)
+    fire_copy.est_fire_area = fire_copy.est_fire_area.round(1)
+    fire_copy.est_brightness = fire_copy.est_brightness.round(1)
+    fire_copy.confidence = fire_copy.confidence.round().astype(int)
+    fire_copy.frp = fire_copy.frp.round(1)
+    fire_copy.fire_count = fire_copy.fire_count.round().astype(int)
+
+    fire_copy = fire_copy.sort_values(by=['latitude', 'longitude'])
 
 
-    last_year = yearly.copy()
-    last_year.year += 1
-    last_year.columns = ['latitude', 'longitude','year', 'cnt_last_year', 'fire_last_year']
+    features = [
+        'latitude', 'longitude', 'year', 'month', 'day',
+        'est_fire_area', 'est_brightness', 'frp', 'fire_count',
+        'confidence'
+    ]
     
-    last_year_month = monthly.copy()
-    last_year_month.year += 1
-    last_year_month.columns = ['latitude', 'longitude', 'year','month', 'cnt_last_year_month', 'fire_last_year_month']
-    
-    past = yearly.copy()
-    past['one'] = 1
-    past = history[['latitude', 'longitude', 'year', 'one']].drop_duplicates().merge(
-        past, on=['latitude', 'longitude', 'one'])
-    past = past[past.year_x < past.year_y]
-    past = past.groupby(['latitude', 'longitude', 'year_y'])[['cnt', 'fire']].mean().reset_index()
-    past.columns = ['latitude', 'longitude', 'year', 'cnt_past', 'fire_past']
-  
-    X = history.merge(past, how='left', on=['latitude', 'longitude', 'year'])
-    X = X.merge(last_year, how='left', on=['latitude', 'longitude', 'year'])
-    X = X.merge(last_year_month, how='left', on=[
-                'latitude', 'longitude', 'year', 'month'])
-    X = X.drop(columns='one')
-
-    features = ['latitude', 'longitude', 'month', 'cnt_past', 'fire_past', 'cnt_last_year', 'fire_last_year',
-        'cnt_last_year_month', 'fire_last_year_month']
-    
-    return (X, features)
+    return (fire_copy, features)
