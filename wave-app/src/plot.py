@@ -41,7 +41,7 @@ def show_bush_fires(df: pd.DataFrame):
     aus_fires = df.copy()
     aus_fires.latitude = aus_fires.latitude.round(1)
     aus_fires.longitude = aus_fires.longitude.round(1)
-    sample = aus_fires[(aus_fires.acq_date >= '2005-01-01') & (aus_fires.acq_date <= '2005-12-31')]
+    sample = aus_fires[(aus_fires.acq_date >= '2019-09-01') & (aus_fires.acq_date <= '2020-03-31')]
     sample = sample.groupby(['latitude', 'longitude']).size().reset_index()
     sample.columns = ['latitude', 'longitude', 'est_fire_happend']
     sample = sample[sample.est_fire_happend > 1]

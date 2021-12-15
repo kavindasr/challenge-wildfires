@@ -37,7 +37,7 @@ async def predict_menu(q:Q, val:str):
     # Display prediction menu, ask user input for month.
     q.page['options'] = ui.form_card(box='predict', items=[
         ui.inline(items=[
-           ui.textbox(name='year', label='Year', value='2005', readonly=True),
+           ui.textbox(name='year', label='Year', value='2019', readonly=True),
            ui.combobox(name='month', label='Month', value=(q.args.month or 'October'), choices=list(months.keys())
            ),
         ]),
@@ -77,18 +77,18 @@ async def prediction(test_predictions):
 
 
     def prediction_handle(prediction): #prediction = row
-    if (prediction[0] == 1):
-        return 0
-    elif (prediction[1] == 1):
-        return 1
-    elif (prediction[2] == 1):
-        return 2
-    elif (prediction[3] == 1):
-        return 3
-    elif (prediction[4] == 1):
-        return 4
-    else:
-        return 0
+        if (prediction[0] == 1):
+            return 0
+        elif (prediction[1] == 1):
+            return 1
+        elif (prediction[2] == 1):
+            return 2
+        elif (prediction[3] == 1):
+            return 3
+        elif (prediction[4] == 1):
+            return 4
+        else:
+            return 0
 
     prediction['prediction'] = prediction.apply (lambda row: prediction_handle(row), axis=1) 
 
