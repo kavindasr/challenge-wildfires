@@ -3,6 +3,8 @@ import pandas as pd
 
 # Data prep step from the submission notebook (challenge_wildfires/notebook/).
 async def get_data(q:Q, path:str):
+
+    aus_fires = pd.read_csv(path, parse_dates=['acq_date'])
     aus_fires['year'] = aus_fires.acq_date.dt.year
     aus_fires['month'] = aus_fires.acq_date.dt.month
     aus_fires['day'] = aus_fires.acq_date.dt.day
