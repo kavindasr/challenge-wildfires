@@ -4,6 +4,7 @@ from sklearn import metrics
 from .ui_utils import *
 from .plot import *
 from .ds import get_data
+import pandas as pd
 
 
 # Functions for predict tab.
