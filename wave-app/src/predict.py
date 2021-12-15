@@ -36,7 +36,7 @@ async def predict_menu(q:Q, val:str):
     # Display prediction menu, ask user input for month.
     q.page['options'] = ui.form_card(box='predict', items=[
         ui.inline(items=[
-           ui.textbox(name='year', label='Year', value='2021', readonly=True),
+           ui.textbox(name='year', label='Year', value='2005', readonly=True),
            ui.combobox(name='month', label='Month', value=(q.args.month or 'October'), choices=list(months.keys())
            ),
         ]),
