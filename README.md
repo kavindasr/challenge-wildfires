@@ -66,6 +66,12 @@ cd wave-app
 
 Point your web browser to http://localhost:10101/ to access the app.
 
+Select data set - data/australia_1_1.csv.gz
+
+Currently model tab is not functioning.
+
+Select model - model/model.txt
+
 ### 6. Bundle your Wave app to run on H2O AI Cloud
 
 This step prepares the Wave app for submission.
